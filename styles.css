@@ -1,0 +1,18 @@
+body {
+  background-color: black; /* Replace 'lightblue' with your desired color */
+}
+
+.video-container {
+  position: relative; /* Essential for positioning child elements */
+  width: 100vw; 
+  height: 56.25vw;
+}
+
+.my-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%; 
+  height: 100%; 
+  visibility: hidden;
+}
