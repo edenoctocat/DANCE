@@ -2,10 +2,27 @@ body {
   background-color: black; /* Replace 'lightblue' with your desired color */
 }
 
+#pausedText {
+  position: absolute;
+  font-size: 50px;
+  color: white;
+}
+
+.hidden {
+  display: none;
+}
+
 .video-container {
   position: relative; /* Essential for positioning child elements */
   width: 100vw; 
   height: 56.25vw;
+}
+
+.parent-container {
+  display: flex;
+  justify-content: center; /* Centers horizontally */
+  align-items: center;    /* Centers vertically */
+  height: 100vh;          /* Example: Set a height for vertical centering */
 }
 
 .my-video {

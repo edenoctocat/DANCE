@@ -1,43 +1,88 @@
-/** in this file, chooses random videos, loads, and plays */
+/** js file that plays loaded videos in random order */
 
-const videoElements = document.querySelectorAll(".my-video"); 
-const videoList = ['video1', 'video2', 'video3', 'video4', 'video5'];
-let remainingVids = videoList.slice()
+const pausedText = document.getElementById('pausedText');
+const videoContainer = document.getElementById('my-container');
+const videoDirectoryPath = 'videos/';
+var videoList = [];
+var remainingVids = [];
 
-function playNext() {
-    let currentVideo = document.getElementById(this.id);
-    if (remainingVids.length == 0) {
-        remainingVids = videoList.slice();
-    }
-    newVideo();
-    currentVideo.style.visibility = "hidden";
-    console.log(remainingVids);
-}
+// use api from server.js to get video list
 
-function newVideo() {
-    newIndex = Math.floor(Math.random() * remainingVids.length);
-    console.log(newIndex);
-    let nextVideo = document.getElementById(remainingVids[newIndex]);
-    nextVideo.style.visibility = "visible";
-    nextVideo.play();
-    remainingVids.splice(newIndex, 1);
-}
+async function loadVideos() {
+    try {
+        const res = await fetch('/videolist');
+        videos = await res.json();
+        console.log('video files from server:', videos);
+        return videos;
 
-function playPause() {
-    let currentVideo = document.getElementById(this.id);
-    if ((currentVideo.currentTime <= 0 || currentVideo.paused || currentVideo.ended) && currentVideo.readyState > 2) {
-        console.log("playing");
-        currentVideo.play();
-    }
-    else {
-        console.log("pausing");
-        currentVideo.pause();
+    } catch (err) {
+        console.error('Error:', err);
     }
 }
 
-window.onload = newVideo();
+async function init() {
+    videoList = await loadVideos();
+    console.log('vids:', videoList);
 
-videoElements.forEach(element => {
-    element.addEventListener('ended', playNext);
-    element.addEventListener('click', playPause);
-});
+    // update index.html with videos from file
+    videoList.forEach(video => {
+        const videoElement = document.createElement('video');
+        videoElement.setAttribute('id', video); // id is same as file name
+        console.log('id:', video.slice(0, -4));
+        videoElement.setAttribute('class', 'my-video');
+        videoElement.setAttribute('src', videoDirectoryPath + video);
+        videoElement.setAttribute('autoplay', '');
+        videoElement.setAttribute('tabindex', '0');
+        // videoElement.setAttribute('type', 'video/mp4');
+        videoContainer.appendChild(videoElement);
+    }); 
+
+    const videoElements = document.querySelectorAll(".my-video"); 
+    remainingVids = videoList.slice();
+    console.log('remaining video list:', remainingVids);
+
+    // functions for video interaction 
+
+    function playNext() {
+        let currentVideo = document.getElementById(this.id);
+        if (remainingVids.length == 0) {
+            remainingVids = videoList.slice();
+        }
+        newVideo();
+        currentVideo.style.visibility = "hidden";
+        console.log(remainingVids);
+    }
+
+    function newVideo() {
+        let newIndex = Math.floor(Math.random() * remainingVids.length);
+        console.log(remainingVids[newIndex]);
+        let nextVideo = document.getElementById(remainingVids[newIndex]);
+        nextVideo.style.visibility = "visible";
+        nextVideo.play();
+        remainingVids.splice(newIndex, 1);
+    }
+
+    function playPause() {
+        let currentVideo = document.getElementById(this.id);
+        if ((currentVideo.currentTime <= 0 || currentVideo.paused || currentVideo.ended) && currentVideo.readyState > 2) {
+            console.log("playing");
+            pausedText.classList.add('hidden');
+            currentVideo.play();
+        }
+        else {
+            console.log("pausing");
+            pausedText.classList.remove('hidden');
+            currentVideo.pause();   
+        }
+    }
+
+    window.onload = newVideo();
+
+    videoElements.forEach(element => {
+        element.addEventListener('ended', playNext);
+        element.addEventListener('click', playPause);
+        element.addEventListener('keydown', playPause);
+    }); 
+}
+
+init();
