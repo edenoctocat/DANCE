@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Input & output folders
+SRC_DIR="./src"
+OUT_DIR="./src-normalized"
+LOG_DIR="./src-logs"
+
+# Create output and logs folders if missing
+mkdir -p "$OUT_DIR" "$LOG_DIR"
+
+# Target loudness values
+TARGET_I=-16
+TARGET_TP=-1.5
+TARGET_LRA=11
+
+# Number of parallel jobs (adjust to your CPU cores)
+JOBS=4
+
+normalize_file() {
+    file="$1"
+    filename=$(basename "$file")
+    outfile="$OUT_DIR/$filename"
+    logfile="$LOG_DIR/${filename%.mp4}.json"
+
+    # Skip file if already normalized
+    if [[ -f "$outfile" ]]; then
+        echo "⏩ Skipping $filename (already normalized)"
+        return
+    fi
+
+    echo "Processing: $filename"
+
+    # PASS 1 — Analyze loudness and extract JSON only
+    ffmpeg -hide_banner -y -i "$file" \
+        -af loudnorm=I=$TARGET_I:TP=$TARGET_TP:LRA=$TARGET_LRA:print_format=json \
+        -f null - 2>&1 | awk '/^{/,/^}/{print}' > "$logfile"
+
+    # Extract measured values using jq
+    measured_I=$(jq -r '.input_i' "$logfile")
+    measured_TP=$(jq -r '.input_tp' "$logfile")
+    measured_LRA=$(jq -r '.input_lra' "$logfile")
+    measured_thresh=$(jq -r '.input_thresh' "$logfile")
+
+    echo " → Measured: I=$measured_I TP=$measured_TP LRA=$measured_LRA Thresh=$measured_thresh"
+
+    # PASS 2 — Apply normalization using measured values
+    ffmpeg -hide_banner -y -i "$file" \
+        -af loudnorm=I=$TARGET_I:TP=$TARGET_TP:LRA=$TARGET_LRA:measured_I=$measured_I:measured_TP=$measured_TP:measured_LRA=$measured_LRA:measured_thresh=$measured_thresh:linear=true \
+        -c:v copy \
+        "$outfile"
+
+    echo " → Done: $outfile"
+    echo "--------------------------------------"
+}
+
+export -f normalize_file
+export OUT_DIR LOG_DIR TARGET_I TARGET_TP TARGET_LRA
+
+# Find all MP4s and process them in parallel
+find "$SRC_DIR" -maxdepth 1 -type f -iname "*.mp4" | parallel -j "$JOBS" normalize_file {}
+
+echo "✅ All files processed in parallel."

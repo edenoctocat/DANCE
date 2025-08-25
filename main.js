@@ -1,13 +1,13 @@
 /** js file that plays loaded videos in random order */
 
-const pausedText = document.getElementById('pausedText');
-const videoContainer = document.getElementById('my-container');
-const videoDirectoryPath = 'videos/';
 let videoList = [];
 let remainingVids = [];
-let videoElement; // single video element
+let videoElements = [];
+let activeIndex = 0; // 0 or 1
+const videoContainer = document.getElementById('my-container');
+const pausedText = document.getElementById('pausedText');
 
-// load video filenames from api
+// load videos from api
 async function loadVideos() {
     try {
         const res = await fetch('/videolist');
@@ -20,88 +20,78 @@ async function loadVideos() {
     }
 }
 
-// init video player
+// initialize 2 video players
 async function init() {
     try {
         videoList = await loadVideos();
-        if (!videoList || videoList.length === 0) {
-            console.warn('No videos found.');
-            return;
-        }
-
+        if (!videoList || videoList.length === 0) return;
         remainingVids = videoList.slice();
 
-        // create ONE video element and append to container
-        videoElement = document.createElement('video');
-        videoElement.classList.add('my-video');
+        // get the two video elements from HTML
+        videoElements = [
+            document.getElementById('video1'),
+            document.getElementById('video2')
+        ];
 
-        // note syntax below --
-        // more modern & easier to read to do without setAttribute
-        // videoElement.setAttribute('autoplay', '');
+        videoElements.forEach(video => {
+            video.controls = false;
+            video.tabIndex = 0;
+            video.addEventListener('ended', playNext);
+            video.addEventListener('click', playPause);
+            video.addEventListener('keydown', e => {
+                if (e.key === ' ' || e.key === 'Enter') playPause();
+            });
+        });
 
-        // no need for autoplay since play() is called in newVideo()
-        // videoElement.autoplay = true;
-        videoElement.tabIndex = 0;
-        videoElement.controls = false;
-        videoContainer.appendChild(videoElement);
-
-        // load first random video
+        // show first video
         newVideo();
-
-        // add event listeners
-        videoElement.addEventListener('ended', playNext);
-        videoElement.addEventListener('click', playPause);
-        videoElement.addEventListener('keydown', playPause);
-
     } catch (err) {
         console.error('Error initializing player:', err);
     }
 }
 
-/*
-    the functions that follow are inherently global in scope so
-    should be outside of init()
-*/
-
-// play next random video
+// play next video (triggered on video end)
 function playNext() {
-    if (remainingVids.length === 0) {
-        // reset the pool when we've played all videos
-        remainingVids = videoList.slice();
-    }
     newVideo();
 }
 
-// load new random video into the video player
-function newVideo() {
-    const newIndex = Math.floor(Math.random() * remainingVids.length);
-    const nextVideoFile = remainingVids[newIndex];
-    console.log("Now playing:", nextVideoFile);
-
-    // swap video source
-    videoElement.src = videoDirectoryPath + nextVideoFile;
-    videoElement.load();
-
-    // attempt autoplay (requires user interaction first due to browser policy)
-    videoElement.play().catch(() => {
-        console.log("Autoplay blocked until user interacts.");
-    });
-
-    // Remove played video from the remaining list
-    remainingVids.splice(newIndex, 1);
+// pause or resume the currently visible video safely
+function playPause() {
+    const currentVideo = videoElements[activeIndex];
+    if (!currentVideo) return; // exit if video element is not ready
+    try {
+        if (currentVideo.paused) {
+            currentVideo.play().catch(err => console.warn('Play error:', err));
+            if (pausedText) pausedText.style.display = 'none';
+        } else {
+            currentVideo.pause();
+            if (pausedText) pausedText.style.display = 'block';
+        }
+    } catch (err) {
+        console.error('Error in playPause:', err);
+    }
 }
 
-// toggle play/pause on click or keydown
-function playPause() {
-    if (videoElement.paused || videoElement.currentTime <= 0) {
-        console.log("Playing");
-        pausedText.classList.add('hidden');
-        videoElement.play();
-    } else {
-        console.log("Pausing");
-        pausedText.classList.remove('hidden');
-        videoElement.pause();
+// play a new random video with crossfade
+function newVideo() {
+    if (remainingVids.length === 0) {
+        remainingVids = videoList.slice();
     }
+    const newIndex = Math.floor(Math.random() * remainingVids.length);
+    const nextVideoFile = remainingVids.splice(newIndex, 1)[0];
+    const nextIndex = 1 - activeIndex; // switch video element
+    const currentVideo = videoElements[activeIndex];
+    const nextVideo = videoElements[nextIndex];
+    nextVideo.src = `videos/${nextVideoFile}`;
+
+    // catch error when browser requires user click before video.play()
+    nextVideo.play().catch(err => console.warn('Play error:', err));
+
+    // cross-fade
+    currentVideo.classList.remove('active');
+    nextVideo.classList.add('active');
+
+    activeIndex = nextIndex;
 }
 
 init();
