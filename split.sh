@@ -28,7 +28,7 @@ fi
 num_clips=$(( shortest_seconds / CLIP_LENGTH ))
 
 # hard-coded for dev
-num_clips=3
+num_clips=2
 
 echo "Shortest video is $shortest_seconds seconds. Each video will produce $num_clips clips of $CLIP_LENGTH seconds."
 

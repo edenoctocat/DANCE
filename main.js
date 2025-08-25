@@ -3,110 +3,100 @@
 const pausedText = document.getElementById('pausedText');
 const videoContainer = document.getElementById('my-container');
 const videoDirectoryPath = 'videos/';
-var videoList = [];
-var remainingVids = [];
+let videoList = [];
+let remainingVids = [];
+let videoElement; // single video element
 
-// use api from server.js to get video list
-
+// load video filenames from api
 async function loadVideos() {
     try {
         const res = await fetch('/videolist');
-        videos = await res.json();
+        const videos = await res.json();
         console.log('video files from server:', videos);
         return videos;
-
     } catch (err) {
-        console.error('Error:', err);
+        console.error('Error loading videos:', err);
+        return [];
     }
 }
 
+// init video player
 async function init() {
-    videoList = await loadVideos();
-    console.log('vids:', videoList);
+    try {
+        videoList = await loadVideos();
+        if (!videoList || videoList.length === 0) {
+            console.warn('No videos found.');
+            return;
+        }
 
-    // update index.html with videos from file
-    // ** better to make only a few videoElements and swap source **
+        remainingVids = videoList.slice();
 
-    /*       
-        Option 1 — Use .src and .load() ✅ 
+        // Create ONE video element and append to container
+        videoElement = document.createElement('video');
+        videoElement.classList.add('my-video');
 
-        const videoElement = document.querySelector('.my-video');
+        // more modern & easier to read to do without setAttribute
+   
+        // videoElement.setAttribute('autoplay', '');
 
-        // Swap video source
-        videoElement.src = videoDirectoryPath + 'newVideo.mp4';
-
-        // Force the browser to load the new video
-        videoElement.load();
-
-        // Optional: autoplay it immediately
-        videoElement.
-    */
-
-    videoList.forEach(video => {
-        const videoElement = document.createElement('video');
-        videoElement.setAttribute('id', video); // id is same as file name
-        console.log('id:', video.slice(0, -4));
-        videoElement.setAttribute('class', 'my-video');
-        videoElement.setAttribute('src', videoDirectoryPath + video);
-        videoElement.setAttribute('autoplay', '');
-        videoElement.setAttribute('tabindex', '0');
-        // videoElement.setAttribute('type', 'video/mp4');
+        videoElement.autoplay = true;
+        videoElement.tabIndex = 0;
+        videoElement.controls = false;
         videoContainer.appendChild(videoElement);
-    }); 
 
-    const videoElements = document.querySelectorAll(".my-video"); 
-    remainingVids = videoList.slice();
-    console.log('remaining video list:', remainingVids);
-
-    // functions for video interaction 
-
-    function playNext() {
-        let currentVideo = document.getElementById(this.id);
-        if (remainingVids.length == 0) {
-            remainingVids = videoList.slice();
-        }
+        // Load the first random video
         newVideo();
-        // currentVideo.style.visibility = "hidden";
-        currentVideo.style.opacity = "0.0";
-        console.log(remainingVids);
+
+        // Add event listeners
+        videoElement.addEventListener('ended', playNext);
+        videoElement.addEventListener('click', playPause);
+        videoElement.addEventListener('keydown', playPause);
+
+    } catch (err) {
+        console.error('Error initializing player:', err);
     }
+}
 
-    function newVideo() {
-        let newIndex = Math.floor(Math.random() * remainingVids.length);
-        console.log(remainingVids[newIndex]);
-        let nextVideo = document.getElementById(remainingVids[newIndex]);
-        // nextVideo.style.visibility = "visible";
-        nextVideo.style.opacity = "1.0";
-        nextVideo.play();
-        remainingVids.splice(newIndex, 1);
+// play next random video
+function playNext() {
+    if (remainingVids.length === 0) {
+        // Reset the pool when we've played all videos
+        remainingVids = videoList.slice();
     }
+    newVideo();
+}
 
-    function playPause() {
-        let currentVideo = document.getElementById(this.id);
-        if ((currentVideo.currentTime <= 0 || currentVideo.paused || currentVideo.ended) && currentVideo.readyState > 2) {
-            console.log("playing");
-            pausedText.classList.add('hidden');
-            currentVideo.play();
-        }
-        else {
-            console.log("pausing");
-            pausedText.classList.remove('hidden');
-            currentVideo.pause();   
-        }
-    }
+// load new random video into the video player
+function newVideo() {
+    const newIndex = Math.floor(Math.random() * remainingVids.length);
+    const nextVideoFile = remainingVids[newIndex];
 
-    // Because newVideo() is inside init(), this line won’t actually work 
-    // the way you expect — window.onload is being set before init() 
-    // even runs, so the function isn’t in scope yet.
-    // window.onload = newVideo();
+    console.log("Now playing:", nextVideoFile);
 
-    videoElements.forEach(element => {
-        element.addEventListener('ended', playNext);
-        element.addEventListener('click', playPause);
-        element.addEventListener('keydown', playPause);
+    // Swap the source
+    videoElement.src = videoDirectoryPath + nextVideoFile;
+    videoElement.load();
+
+    // Attempt autoplay (may require user interaction first due to browser policy)
+    videoElement.play().catch(() => {
+        console.log("Autoplay blocked until user interacts.");
     });
 
-    newVideo(); 
+    // Remove played video from the remaining list
+    remainingVids.splice(newIndex, 1);
+}
+
+// toggle play/pause on click or keydown
+function playPause() {
+    if (videoElement.paused || videoElement.currentTime <= 0) {
+        console.log("Playing");
+        pausedText.classList.add('hidden');
+        videoElement.play();
+    } else {
+        console.log("Pausing");
+        pausedText.classList.remove('hidden');
+        videoElement.pause();
+    }
 }
 
 init();
