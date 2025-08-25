@@ -31,12 +31,12 @@ async function init() {
 
         remainingVids = videoList.slice();
 
-        // Create ONE video element and append to container
+        // create ONE video element and append to container
         videoElement = document.createElement('video');
         videoElement.classList.add('my-video');
 
+        // note syntax below --
         // more modern & easier to read to do without setAttribute
-   
         // videoElement.setAttribute('autoplay', '');
 
         videoElement.autoplay = true;
@@ -44,10 +44,10 @@ async function init() {
         videoElement.controls = false;
         videoContainer.appendChild(videoElement);
 
-        // Load the first random video
+        // load first random video
         newVideo();
 
-        // Add event listeners
+        // add event listeners
         videoElement.addEventListener('ended', playNext);
         videoElement.addEventListener('click', playPause);
         videoElement.addEventListener('keydown', playPause);
@@ -57,10 +57,15 @@ async function init() {
     }
 }
 
+/*
+    the functions that follow are inherently global in scope so
+    should be outside of init()
+*/
+
 // play next random video
 function playNext() {
     if (remainingVids.length === 0) {
-        // Reset the pool when we've played all videos
+        // reset the pool when we've played all videos
         remainingVids = videoList.slice();
     }
     newVideo();
@@ -70,14 +75,13 @@ function playNext() {
 function newVideo() {
     const newIndex = Math.floor(Math.random() * remainingVids.length);
     const nextVideoFile = remainingVids[newIndex];
-
     console.log("Now playing:", nextVideoFile);
 
-    // Swap the source
+    // swap video source
     videoElement.src = videoDirectoryPath + nextVideoFile;
     videoElement.load();
 
-    // Attempt autoplay (may require user interaction first due to browser policy)
+    // attempt autoplay (requires user interaction first due to browser policy)
     videoElement.play().catch(() => {
         console.log("Autoplay blocked until user interacts.");
     });

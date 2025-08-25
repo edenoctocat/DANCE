@@ -1,5 +1,5 @@
 body {
-  background-color: black; /* Replace 'lightblue' with your desired color */
+  background-color: #222; 
 }
 
 #pausedText {
@@ -35,4 +35,5 @@ body {
   /* opacity: 0.0; */
   opacity: 1.0;
   transition: opacity 12s;
+  background-color: #000; 
 }
