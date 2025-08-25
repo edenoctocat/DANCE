@@ -39,7 +39,8 @@ async function init() {
         // more modern & easier to read to do without setAttribute
         // videoElement.setAttribute('autoplay', '');
 
-        videoElement.autoplay = true;
+        // no need for autoplay since play() is called in newVideo()
+        // videoElement.autoplay = true;
         videoElement.tabIndex = 0;
         videoElement.controls = false;
         videoContainer.appendChild(videoElement);
