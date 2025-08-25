@@ -64,6 +64,7 @@ function setupVideoInteractions(state) {
         newVideo();
         currentVideo.style.visibility = "hidden";
         // currentVideo.setAttribute('tabindex', '1');
+        currentVideo.currentTime = 0; // rewind video
         console.log("remaining videos:", state.remainingVids);
     }
 
@@ -75,14 +76,14 @@ function setupVideoInteractions(state) {
         // nextVideo.setAttribute('tabindex', '0');
         nextVideo.play();
         // update state
-        state.remainingVids.splice(newIndex, 1);
         state.currentVideoId = state.remainingVids[newIndex];
+        state.remainingVids.splice(newIndex, 1);
         console.log("state:", state);
     }
 
     function playPause(event) {
-        let currentVideo = event.target;
-        // let currentVideo = document.getElementById(state.currentVideoId);
+        // let currentVideo = event.target;
+        let currentVideo = document.getElementById(state.currentVideoId);
         if ((currentVideo.currentTime <= 0 || currentVideo.paused || currentVideo.ended) && currentVideo.readyState > 2) {
             console.log("playing");
             pausedText.classList.add('hidden');
