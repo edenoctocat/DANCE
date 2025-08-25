@@ -12,27 +12,33 @@ const state = {
   playing: false        // keep track of playing
 };
 
-// use api from server.js to get video list
 
-async function loadVideos() {
+// use api from server.js to get video list and init
+
+async function init() {
+    const loading = document.getElementById("loading");
+
     try {
+        loading.style.display = "block";
+        videoContainer.style.display = "none";
+
         const res = await fetch('/videolist');
         const videos = await res.json();
         console.log('video files from server:', videos);
-        return videos;
+        state.videoList = videos;
+        state.remainingVids = videos.slice(); // remainingVids set as copy of all videos
+
+        renderVideos(state);
+        setupVideoInteractions(state);
+
+        // hide loading once videos are ready
+        loading.style.display = "none";
+        videoContainer.style.display = "block";
 
     } catch (err) {
+        loading.textContent = "Error loading videos";
         console.error('Error:', err);
     }
-}
-
-async function init() {
-    state.videoList = await loadVideos();
-    console.log('vids:', state.videoList);
-    state.remainingVids = state.videoList.slice(); // remainingVids set as copy of all videos
-
-    renderVideos(state);
-    setupVideoInteractions(state);
 }
 
 function renderVideos(state) {
@@ -63,7 +69,6 @@ function setupVideoInteractions(state) {
         }
         newVideo();
         currentVideo.style.visibility = "hidden";
-        // currentVideo.setAttribute('tabindex', '1');
         currentVideo.currentTime = 0; // rewind video
         console.log("remaining videos:", state.remainingVids);
     }
@@ -73,7 +78,6 @@ function setupVideoInteractions(state) {
         console.log("next video:", state.remainingVids[newIndex]);
         let nextVideo = document.getElementById(state.remainingVids[newIndex]);
         nextVideo.style.visibility = "visible";
-        // nextVideo.setAttribute('tabindex', '0');
         nextVideo.play();
         // update state
         state.currentVideoId = state.remainingVids[newIndex];
