@@ -25,6 +25,23 @@ async function init() {
     console.log('vids:', videoList);
 
     // update index.html with videos from file
+    // ** better to make only a few videoElements and swap source **
+
+    /*       
+        Option 1 — Use .src and .load() ✅ 
+
+        const videoElement = document.querySelector('.my-video');
+
+        // Swap video source
+        videoElement.src = videoDirectoryPath + 'newVideo.mp4';
+
+        // Force the browser to load the new video
+        videoElement.load();
+
+        // Optional: autoplay it immediately
+        videoElement.
+    */
+
     videoList.forEach(video => {
         const videoElement = document.createElement('video');
         videoElement.setAttribute('id', video); // id is same as file name
@@ -49,7 +66,8 @@ async function init() {
             remainingVids = videoList.slice();
         }
         newVideo();
-        currentVideo.style.visibility = "hidden";
+        // currentVideo.style.visibility = "hidden";
+        currentVideo.style.opacity = "0.0";
         console.log(remainingVids);
     }
 
@@ -57,7 +75,8 @@ async function init() {
         let newIndex = Math.floor(Math.random() * remainingVids.length);
         console.log(remainingVids[newIndex]);
         let nextVideo = document.getElementById(remainingVids[newIndex]);
-        nextVideo.style.visibility = "visible";
+        // nextVideo.style.visibility = "visible";
+        nextVideo.style.opacity = "1.0";
         nextVideo.play();
         remainingVids.splice(newIndex, 1);
     }
@@ -76,13 +95,18 @@ async function init() {
         }
     }
 
-    window.onload = newVideo();
+    // Because newVideo() is inside init(), this line won’t actually work 
+    // the way you expect — window.onload is being set before init() 
+    // even runs, so the function isn’t in scope yet.
+    // window.onload = newVideo();
 
     videoElements.forEach(element => {
         element.addEventListener('ended', playNext);
         element.addEventListener('click', playPause);
         element.addEventListener('keydown', playPause);
-    }); 
+    });
+
+    newVideo(); 
 }
 
 init();
