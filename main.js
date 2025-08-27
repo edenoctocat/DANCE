@@ -4,6 +4,8 @@ let videoList = [];
 let remainingVids = [];
 let videoElements = [];
 let activeIndex = 0; // 0 or 1
+let credits = [];
+let credits_open = true;
 const videoContainer = document.getElementById('my-container');
 const pausedText = document.getElementById('pausedText');
 
@@ -26,6 +28,7 @@ async function init() {
         videoList = await loadVideos();
         if (!videoList || videoList.length === 0) return;
         remainingVids = videoList.slice();
+        credits = ['open.mp4', 'close.mp4'];
 
         // get the two video elements from HTML
         videoElements = [
@@ -72,24 +75,50 @@ function playPause() {
     }
 }
 
-// play a new random video with crossfade
+// play a new video with crossfade
 function newVideo() {
-    if (remainingVids.length === 0) {
-        remainingVids = videoList.slice();
-    }
-    const newIndex = Math.floor(Math.random() * remainingVids.length);
-    const nextVideoFile = remainingVids.splice(newIndex, 1)[0];
     const nextIndex = 1 - activeIndex; // switch video element
     const currentVideo = videoElements[activeIndex];
     const nextVideo = videoElements[nextIndex];
-    nextVideo.src = `videos/${nextVideoFile}`;
+    const newIndex = Math.floor(Math.random() * remainingVids.length);
+    const nextVideoFile = remainingVids.splice(newIndex, 1)[0];
+    console.log(remainingVids);
+    console.log('videoList.length : ' + videoList.length);
+    console.log('remainingVids.length : ' + remainingVids.length);
 
-    // catch error when browser requires user click before video.play()
-    nextVideo.play().catch(err => console.warn('Play error:', err));
+    // this is a bit of a cheat, still skipping first video
+    // plus wont work if more than one clip per video
+    // use % videoList.length
 
-    // cross-fade
-    currentVideo.classList.remove('active');
-    nextVideo.classList.add('active');
+    if (remainingVids.length == videoList.length - 1) {
+
+        nextVideo.src = 'credits/open.mp4';
+        nextVideo.play().catch(err => console.warn('Play error:', err));
+
+        // cross-fade
+        currentVideo.classList.remove('active');
+        nextVideo.classList.add('active');
+
+        credits_open = false;
+
+    } else if (remainingVids.length !== 0) {
+        nextVideo.src = `videos/${nextVideoFile}`;
+        nextVideo.play().catch(err => console.warn('Play error:', err));
+
+        // cross-fade
+        currentVideo.classList.remove('active');
+        nextVideo.classList.add('active');
+
+    } else if (remainingVids.length === 0) {   
+        remainingVids = videoList.slice();   
+
+        nextVideo.src = 'credits/close.mp4';
+        nextVideo.play().catch(err => console.warn('Play error:', err));
+
+        // cross-fade
+        currentVideo.classList.remove('active');
+        nextVideo.classList.add('active');
+    }
 
     activeIndex = nextIndex;
 }
