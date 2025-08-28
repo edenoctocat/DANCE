@@ -4,8 +4,8 @@ let videoList = [];
 let remainingVids = [];
 let videoElements = [];
 let activeIndex = 0; // 0 or 1
-let credits = [];
-let credits_open = true;
+let show_credits_open = true;
+let show_credits_close = false;
 const videoContainer = document.getElementById('my-container');
 const pausedText = document.getElementById('pausedText');
 
@@ -46,16 +46,11 @@ async function init() {
             });
         });
 
-        // show first video
-        newVideo();
+        // show video
+        playNext();
     } catch (err) {
         console.error('Error initializing player:', err);
     }
-}
-
-// play next video (triggered on video end)
-function playNext() {
-    newVideo();
 }
 
 // pause or resume the currently visible video safely
@@ -75,50 +70,75 @@ function playPause() {
     }
 }
 
-// play a new video with crossfade
-function newVideo() {
-    const nextIndex = 1 - activeIndex; // switch video element
-    const currentVideo = videoElements[activeIndex];
-    const nextVideo = videoElements[nextIndex];
-    const newIndex = Math.floor(Math.random() * remainingVids.length);
-    const nextVideoFile = remainingVids.splice(newIndex, 1)[0];
+// safe playback in chrome and other browsers
+async function safePlay(video) {
+    console.log('** safePlay called **');
+    video.playbackRate = 5.0;     // ** dev **
+
+    // wait until video is ready to play
+    if (video.readyState < 3) {
+        await new Promise(resolve => {
+            const onReady = () => {
+                video.removeEventListener("canplay", onReady);
+                resolve();
+            };
+            video.addEventListener("canplay", onReady);
+        });
+    }
+
+    // attempt play, handle chrome autoplay restrictions
+    try {
+        await video.play();
+        console.log("Playback started:", video.src);
+    } catch (err) {
+        console.warn("Playback blocked:", err);
+    }
+}
+
+// play next video with crossfade
+function playNext() {
+    console.log('** newVideo called **');
     console.log(remainingVids);
     console.log('videoList.length : ' + videoList.length);
     console.log('remainingVids.length : ' + remainingVids.length);
+
+    // swap html video elements
+    const nextIndex = 1 - activeIndex; // switch video element
+    const currentVideo = videoElements[activeIndex];
+    const nextVideo = videoElements[nextIndex];
 
     // this is a bit of a cheat, still skipping first video
     // plus wont work if more than one clip per video
     // use % videoList.length
 
-    if (remainingVids.length == videoList.length - 1) {
+    if (remainingVids.length % videoList.length === 0 && show_credits_open) {
+        
+        // play opening credit
+        nextVideo.src = 'credits/open.mp4'; 
+        show_credits_open = false;
 
-        nextVideo.src = 'credits/open.mp4';
-        nextVideo.play().catch(err => console.warn('Play error:', err));
+    } else if (remainingVids.length % videoList.length === 0 && show_credits_close) {
 
-        // cross-fade
-        currentVideo.classList.remove('active');
-        nextVideo.classList.add('active');
+        // play closing credit
+        nextVideo.src = 'credits/close.mp4'; 
+        remainingVids = videoList.slice(); // reset remaining video list
+        show_credits_open = true;
+        show_credits_close = false;
 
-        credits_open = false;
+    } else {
 
-    } else if (remainingVids.length !== 0) {
+        // play next random video
+        const newIndex = Math.floor(Math.random() * remainingVids.length);
+        const nextVideoFile = remainingVids.splice(newIndex, 1)[0];
         nextVideo.src = `videos/${nextVideoFile}`;
-        nextVideo.play().catch(err => console.warn('Play error:', err));
-
-        // cross-fade
-        currentVideo.classList.remove('active');
-        nextVideo.classList.add('active');
-
-    } else if (remainingVids.length === 0) {   
-        remainingVids = videoList.slice();   
-
-        nextVideo.src = 'credits/close.mp4';
-        nextVideo.play().catch(err => console.warn('Play error:', err));
-
-        // cross-fade
-        currentVideo.classList.remove('active');
-        nextVideo.classList.add('active');
+        show_credits_close = true;
     }
+        
+    safePlay(nextVideo);
+        
+    // cross-fade
+    currentVideo.classList.remove('active');
+    nextVideo.classList.add('active');
 
     activeIndex = nextIndex;
 }

@@ -74,4 +74,10 @@ done
 echo "🔥 All eligible videos processed. Originals remain in src/"
 
 # Open Chrome
-open -a "Google Chrome" http://localhost:8080
+# open -a "Google Chrome" http://localhost:8080
+
+# Force render in absolute pixels so screen recording works:
+open -a "Google Chrome" --args --force-device-scale-factor=1 http://localhost:8080
+
+
+
