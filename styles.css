@@ -31,7 +31,6 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  transition: opacity 6s ease; /* for dissolve */
   opacity: 0;
   pointer-events: none; /* let clicks pass through the invisible video */
   background-color: #000; 
@@ -40,6 +39,11 @@ body {
 .my-video.active {
   opacity: 1;
   pointer-events: auto;
+  transition: opacity 6s ease;
+}
+
+.my-video.active.cut {
+  transition: none;
 }
 
 #pausedText {

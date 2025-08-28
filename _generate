@@ -1,6 +1,10 @@
 #!/bin/bash
 
-LOOPS=3   # number of iterations
+# Usage: ./_generate [LOOPS] [DURATION]
+# Defaults: LOOPS=12, DURATION=156
+
+LOOPS=${1:-12}
+DURATION=${2:-156}
 
 for i in $(seq 1 $LOOPS); do
     echo "Iteration $i of $LOOPS"
@@ -9,8 +13,6 @@ for i in $(seq 1 $LOOPS); do
     source ./_video-split 12
 
     # open screen recording
-    DURATION=156   # seconds to record
-    
 osascript <<EOF
 tell application "System Events"
     -- Open screenshot/record toolbar
@@ -25,7 +27,7 @@ tell application "System Events"
 end tell
 EOF
 
-# quit Chrome
+    # quit Chrome
 osascript <<EOF
     tell application "Google Chrome" to quit
 EOF

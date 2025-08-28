@@ -4,8 +4,9 @@ let videoList = [];
 let remainingVids = [];
 let videoElements = [];
 let activeIndex = 0; // 0 or 1
-let show_credits_open = true;
-let show_credits_close = false;
+let credits_open = true;
+let credits_close = false;
+let loop = false;
 const videoContainer = document.getElementById('my-container');
 const pausedText = document.getElementById('pausedText');
 
@@ -107,38 +108,42 @@ function playNext() {
     const currentVideo = videoElements[activeIndex];
     const nextVideo = videoElements[nextIndex];
 
-    // this is a bit of a cheat, still skipping first video
-    // plus wont work if more than one clip per video
-    // use % videoList.length
-
-    if (remainingVids.length % videoList.length === 0 && show_credits_open) {
+    if (remainingVids.length % videoList.length === 0 && credits_open) {
         
         // play opening credit
         nextVideo.src = 'credits/open.mp4'; 
-        show_credits_open = false;
+        nextVideo.classList.add('cut'); 
+        credits_open = false;
 
-    } else if (remainingVids.length % videoList.length === 0 && show_credits_close) {
+    } else if (remainingVids.length % videoList.length === 0 && credits_close) {
 
         // play closing credit
         nextVideo.src = 'credits/close.mp4'; 
-        remainingVids = videoList.slice(); // reset remaining video list
-        show_credits_open = true;
-        show_credits_close = false;
-
+        nextVideo.classList.add('cut'); 
+        credits_close = false;
+        if (loop) {
+            remainingVids = videoList.slice();
+            credits_open = true; 
+            console.log('** loop **');
+        } else {
+            nextVideo.removeEventListener('ended', playNext); // stop
+            console.log('** stop **');
+        }
     } else {
 
         // play next random video
         const newIndex = Math.floor(Math.random() * remainingVids.length);
         const nextVideoFile = remainingVids.splice(newIndex, 1)[0];
         nextVideo.src = `videos/${nextVideoFile}`;
-        show_credits_close = true;
+        nextVideo.classList.remove('cut'); 
+        credits_close = true;
     }
-        
-    safePlay(nextVideo);
-        
+
     // cross-fade
     currentVideo.classList.remove('active');
     nextVideo.classList.add('active');
+
+    safePlay(nextVideo);
 
     activeIndex = nextIndex;
 }
