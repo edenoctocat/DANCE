@@ -73,7 +73,7 @@ function playPause() {
 // safe playback in chrome and other browsers
 async function safePlay(video) {
     console.log('** safePlay called **');
-    video.playbackRate = 5.0;     // ** dev **
+    // video.playbackRate = 10.0;     // ** dev **
 
     // wait until video is ready to play
     if (video.readyState < 3) {

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+LOOPS=3   # number of iterations
+
+for i in $(seq 1 $LOOPS); do
+    echo "Iteration $i of $LOOPS"
+
+    # split videos and start Chrome
+    source ./_video-split 12
+
+    # open screen recording
+    DURATION=156   # seconds to record
+    
+osascript <<EOF
+tell application "System Events"
+    -- Open screenshot/record toolbar
+    key code 23 using {shift down, command down}
+    delay 0.5
+
+    -- Wait for recording duration
+    delay ${DURATION}
+
+    -- Stop recording using Command+Control+Esc
+    key code 53 using {command down, control down}
+end tell
+EOF
+
+# quit Chrome
+osascript <<EOF
+    tell application "Google Chrome" to quit
+EOF
+
+    # optional: short delay before next iteration
+    sleep 1
+done
