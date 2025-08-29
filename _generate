@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# Usage: ./_generate [LOOPS] [DURATION]
-# Defaults: LOOPS=12, DURATION=156
+# semi-automated screen recording for grey area
+
+# usage: ./_generate [LOOPS] [DURATION]
+# defaults: LOOPS=12, DURATION=162
 
 LOOPS=${1:-12}
-DURATION=${2:-156}
+DURATION=${2:-162}
 
 for i in $(seq 1 $LOOPS); do
     echo "Iteration $i of $LOOPS"

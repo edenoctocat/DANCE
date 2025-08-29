@@ -46,9 +46,15 @@ async function init() {
                 if (e.key === ' ' || e.key === 'Enter') playPause();
             });
         });
+     
+        // add a global click handler to trigger playNext()
+        window.addEventListener('click', (e) => {
+            if (!videoElements.includes(e.target)) {
+                window.removeEventListener('click', playNext); 
+                playNext();
+            }
+        });
 
-        // show video
-        playNext();
     } catch (err) {
         console.error('Error initializing player:', err);
     }
@@ -60,7 +66,7 @@ function playPause() {
     if (!currentVideo) return; // exit if video element is not ready
     try {
         if (currentVideo.paused) {
-            currentVideo.play().catch(err => console.warn('Play error:', err));
+            safePlay(currentVideo);
             if (pausedText) pausedText.style.display = 'none';
         } else {
             currentVideo.pause();
