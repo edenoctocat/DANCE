@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+INPUT_DIR="/Users/reinfurt/DANCE/render"
+OUTPUT_DIR="$INPUT_DIR/tmp"
+FINAL_OUTPUT="$INPUT_DIR/grey-area_$(date +%Y-%m-%d_%H-%M-%S).mp4"
+FONT_PATH="/System/Library/Fonts/Supplemental/Arial Narrow.ttf"
+TEMP_LIST="$OUTPUT_DIR/files_to_concat.txt"
+FPS=30   # constant frame rate to enforce
+
+# Create output dir
+mkdir -p "$OUTPUT_DIR"
+
+# Clean up old list if it exists
+rm -f "$TEMP_LIST"
+
+# Loop through all .mov files in INPUT_DIR
+for FILE in "$INPUT_DIR"/*.mov; do
+    BASENAME=$(basename "$FILE")
+    BASENAME_NOEXT="${BASENAME%.*}"
+    OUTPUT_FILE="$OUTPUT_DIR/${BASENAME_NOEXT}.mp4"
+
+    # Extract timestamp from filename (everything after "Screen Recording ")
+    TIMESTAMP="${BASENAME_NOEXT#Screen Recording }"
+
+    # Create overlay text file dynamically
+    TEXTFILE="$OUTPUT_DIR/${BASENAME_NOEXT}_overlay.txt"
+    echo -e "TRAILER FOR A GREY AREA\n$TIMESTAMP" > "$TEXTFILE"
+
+    echo "Processing: $BASENAME → $OUTPUT_FILE"
+
+    # Apply overlay and force constant frame rate, re-encode audio
+    ffmpeg -i "$FILE" \
+        -vf "fps=$FPS,drawtext=fontfile='$FONT_PATH':textfile='$TEXTFILE':fontcolor=yellow:fontsize=28:x=40:y=40:enable='lte(t,3)'" \
+        -c:v libx264 -crf 18 -preset veryfast \
+        -c:a aac -b:a 192k \
+        "$OUTPUT_FILE"
+
+    # Add processed file to concat list
+    echo "file '$OUTPUT_FILE'" >> "$TEMP_LIST"
+done
+
+# Concatenate all processed files into one MP4 (now all CFR)
+# also reencoding audio to enforce a constant frame rate
+# and matching time stamps
+echo "Combining all videos into: $FINAL_OUTPUT"
+ffmpeg -f concat -safe 0 -i "$TEMP_LIST" -c:v copy -c:a aac -b:a 192k "$FINAL_OUTPUT"
+
+echo "✅ Done! Final video: $FINAL_OUTPUT"
+open "$FINAL_OUTPUT"
