@@ -30,8 +30,16 @@ for FILE in "$INPUT_DIR"/*.mov; do
     echo "Processing: $BASENAME → $OUTPUT_FILE"
 
     # Apply overlay and force constant frame rate, re-encode audio
+    # and crop width by 2 pixels to get 2560 x 1440 finished size
+
+    # ffmpeg -i "$FILE" \
+    #    -vf "fps=$FPS,drawtext=fontfile='$FONT_PATH':textfile='$TEXTFILE':fontcolor=yellow:fontsize=28:x=40:y=40:enable='lte(t,3)'" \
+    #    -c:v libx264 -crf 18 -preset veryfast \
+    #    -c:a aac -b:a 192k \
+    #    "$OUTPUT_FILE"
+
     ffmpeg -i "$FILE" \
-        -vf "fps=$FPS,drawtext=fontfile='$FONT_PATH':textfile='$TEXTFILE':fontcolor=yellow:fontsize=28:x=40:y=40:enable='lte(t,3)'" \
+        -vf "fps=$FPS,crop=iw-2:ih:1:0,drawtext=fontfile='$FONT_PATH':textfile='$TEXTFILE':fontcolor=yellow:fontsize=28:x=40:y=40:enable='lte(t,3)'" \
         -c:v libx264 -crf 18 -preset veryfast \
         -c:a aac -b:a 192k \
         "$OUTPUT_FILE"
