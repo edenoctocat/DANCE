@@ -81,6 +81,7 @@ function playPause() {
 async function safePlay(video) {
     console.log('** safePlay called **');
     // video.playbackRate = 10.0;     // ** dev **
+    // video.playbackRate = 5.0;     // ** dev **
 
     // wait until video is ready to play
     if (video.readyState < 3) {
@@ -119,6 +120,7 @@ function playNext() {
         // play opening credit
         nextVideo.src = 'credits/open.mp4'; 
         nextVideo.classList.add('cut'); 
+        currentVideo.classList.add('cut'); 
         credits_open = false;
 
     } else if (remainingVids.length % videoList.length === 0 && credits_close) {
@@ -126,6 +128,7 @@ function playNext() {
         // play closing credit
         nextVideo.src = 'credits/close.mp4'; 
         nextVideo.classList.add('cut'); 
+        currentVideo.classList.add('cut'); 
         credits_close = false;
         if (loop) {
             remainingVids = videoList.slice();
@@ -142,6 +145,7 @@ function playNext() {
         const nextVideoFile = remainingVids.splice(newIndex, 1)[0];
         nextVideo.src = `videos/${nextVideoFile}`;
         nextVideo.classList.remove('cut'); 
+        // currentVideo.classList.remove('cut'); 
         credits_close = true;
     }
 
