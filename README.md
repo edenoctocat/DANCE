@@ -1,9 +1,5 @@
-Testing video player in HTML/JS.
+DANCE by edenoctocat 🐙🐱
 
-This works in Chrome (video.play() not available in Safari)
+https://github.com/edenoctocat/DANCE
 
-To force Chrome to render in absolute pixels so screen recording can work as expected, use:
-
-    open -a "Google Chrome" --args --force-device-scale-factor=1
-
-
+Randomizing video player in HTML/JS for Chrome only (video.play() not available in Safari).
